@@ -1,5 +1,7 @@
 package com.sbms.shootandevade;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -12,10 +14,13 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener, View.OnClickListener{
@@ -24,18 +29,20 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 	Button mBtnControllerUp;
 	Button mBtnControllerDown;
 	Button mBtnControllerFire;
-	ImageView mPlayer;
-	ImageView mProjectile;
+	GameObject mPlayer;
+	GameObject mProjectile;
 
 	boolean mIsBtnControllerPressed;
 	CharacterMoveTask mMoveTask;
 
 	static int sDisplayHeight;
 	static int sDisplayWidth;
+	static ArrayList<GameObject> sActiveGameObjects;
 	static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
 
 	/** This is the space between the player and the projectile when it fires **/
 	final int PROJECTILE_MARGIN = 25;
+	final int PROJECTILE_SPEED = 1500;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,14 +54,24 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 		// Grab the device width for the application to use elsewhere
 		sDisplayWidth = getResources().getDisplayMetrics().widthPixels;
 
+		sActiveGameObjects = new ArrayList<>();
+
 		// Link xml version of views to the code version
 		mLayoutGame = (RelativeLayout) findViewById(R.id.layout_game);
 		mBtnControllerUp = (Button) findViewById(R.id.btn_controller_up);
 		mBtnControllerDown = (Button) findViewById(R.id.btn_controller_down);
 		mBtnControllerFire = (Button) findViewById(R.id.btn_controller_fire);
 
+		mLayoutGame.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+			@Override
+			public boolean onPreDraw() {
+
+				return true;
+			}
+		});
+
 		// Create the view that represents the player
-		mPlayer = new ImageView(this);
+		mPlayer = new GameObject(this, GameObject.TYPE_PLAYER);
 		mPlayer.setId(generateViewId());
 		// NOTE: the following is discouraged because it slows down the main thread.
 		// Create bitmap on another thread using the resource and pass it back
@@ -79,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 		playerParams.setMargins(10, 0, 0, 0);
 
 		mLayoutGame.addView(mPlayer, playerParams);
+		sActiveGameObjects.add(mPlayer);
 	}
 
 	@Override
@@ -126,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 		// It is assumed the only button that can be "clicked" is the 'mBtnControllerFire'
 
 		// Create the view that represents the projectile
-		mProjectile = new ImageView(this);
+		mProjectile = new GameObject(this, GameObject.TYPE_PLAYER_PROJECTILE);
 		// NOTE: the following is discouraged because it slows down the main thread.
 		// Create bitmap on another thread using the resource and pass it back
 		mProjectile.setImageResource(R.drawable.player_plane);
@@ -136,6 +154,44 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 		mProjectile.setY(mPlayer.getY());
 
 		mLayoutGame.addView(mProjectile);
+		sActiveGameObjects.add(mProjectile);
+
+		// This animates the projectile to go straight to the right end of the screen, in 1.5 seconds immediately
+		ObjectAnimator xTranslator = ObjectAnimator.ofFloat(mProjectile, View.TRANSLATION_X, MainActivity.sDisplayWidth /2);
+		xTranslator.setInterpolator(new LinearInterpolator());
+		xTranslator.setDuration(PROJECTILE_SPEED);
+		xTranslator.addListener(new Animator.AnimatorListener() {
+			@Override
+			public void onAnimationStart(Animator animator) {
+				// Do nothing
+			}
+
+			@Override
+			public void onAnimationEnd(Animator animator) {
+				MainActivity.this.mLayoutGame.removeView(MainActivity.this.mProjectile);
+				MainActivity.sActiveGameObjects.remove(MainActivity.this.mProjectile);
+			}
+
+			@Override
+			public void onAnimationCancel(Animator animator) {
+				// At the moment do nothing
+			}
+
+			@Override
+			public void onAnimationRepeat(Animator animator) {
+				// Do nothing
+			}
+		});
+		xTranslator.start();
+	}
+
+	/**
+	 * Removes the gameObject from the active list and from the layout
+	 * @param gameObject the object to be removed
+	 */
+	private void removeGameObject(GameObject gameObject){
+		mLayoutGame.removeViewInLayout(gameObject);
+		sActiveGameObjects.remove(gameObject);
 	}
 
 	/**
