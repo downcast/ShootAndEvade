@@ -1,25 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+                android:id="@+id/layout_game">
 
-    <android.support.design.widget.AppBarLayout
+    <Button
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:text="Down"
+        android:id="@+id/btn_controller_down"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Up"
+        android:id="@+id/btn_controller_up"
+        android:layout_above="@+id/btn_controller_down"
+        android:layout_alignLeft="@+id/btn_controller_down"
+        android:layout_alignStart="@+id/btn_controller_down"/>
 
-    </android.support.design.widget.AppBarLayout>
-
-</android.support.design.widget.CoordinatorLayout>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fire"
+        android:id="@+id/btn_controller_fire"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+</RelativeLayout>
